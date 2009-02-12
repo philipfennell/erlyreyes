@@ -1,0 +1,15 @@
+Renderman® RIB Parser
+=====================
+
+RegExp
+------
+
+*	RIB commands (and comments) that may have been indented:
+
+	\s?#|Display|Format|Projection|ShadingRate|Translate|WorldBegin|WorldEnd|Polygon
+
+    \r\n|(Display|Format|Projection|ShadingRate|Translate|WorldBegin|WorldEnd|Polygon)
+	
+	[\r\n\]?#|Display|Format|Projection|ShadingRate|Translate|WorldBegin|WorldEnd|Polygon[\s+[\-?0-9\.?]+]*|[\s+\"[a-zA-Z]+|\s\"]*
+	
+	(#|Display|Format|Projection|ShadingRate|Translate|WorldBegin|WorldEnd|Polygon)(\s+[0-9]+)*

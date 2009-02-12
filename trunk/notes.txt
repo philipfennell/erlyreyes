@@ -1,0 +1,220 @@
+﻿E-Reyes Notes
+=============
+
+
+
+
+Things to do
+------------
+
+*	Value serialization will have to be recursive so that the cumulative 
+	aggregation of values is done.
+
+*	I think all the values should be referenced by offsets, it makes
+	it much easier to handle the fields as offset only.
+
+*	There's plenty of opportunity for refactoring. Many of the field functions
+	could be replaced with a generic field function that is parameterised.
+
+*	Consider using Funs for creating the IFDs.
+
+
+
+
+WIP
+---
+
+*	TIFF serialiser
+
+
+
+
+Done
+----
+
+*	'Make' function that constructs the TIFF data.
+*	Sort fields prior to serialisation.
+*	Field serialisation that converts atoms to TIFF values e.g. Type.
+
+
+
+
+How to make a TIFF?
+-------------------
+
+tiff:make(Format, Width, Height, ImageData).
+
+
+
+Output from tiff:imageFileDirectory(rgb, 256, 512, 72, inch, 8, tiles).
+
+	[{{tag,image_width},{type,short},{count,1},{value,256}},
+	 {{tag,image_length},{type,short},{count,1},{value,512}},
+	 {{tag,bits_per_sample},
+	  {type,short},
+	  {count,3},
+	  {value,"\b\b\b"}},
+	 {{tag,compression},{type,short},{count,1},{value,none}},
+	 {{tag,photometric_interpretation},
+	  {type,short},
+	  {count,1},
+	  {value,rgb}},
+	 {{tag,samples_per_pixel},{type,short},{count,1},{value,3}},
+	 {{tag,x_resolution},{type,rational},{count,1},{value,72}},
+	 {{tag,y_resolution},{type,rational},{count,1},{value,72}},
+	 {{tag,resolution_unit},{type,short},{count,1},{value,inch}},
+	 {{tag,tile_width},{type,short},{count,1},{value,16}},
+	 {{tag,tile_width},{type,short},{count,1},{value,16}},
+	 {{tag,tile_offsets},{type,long},{count,0},{value,[]}},
+	 {{tag,tile_byte_counts},{type,long},{count,0},{value,[]}}]
+
+
+
+
+Baseline TIFF structure for an RGB image
+----------------------------------------
+
+Description					Bytes	Notes
+
+Image File Header:
+	Byte Order				 2		MM
+	TIFF ID					 2		42
+	IFD Offset				 4		
+
+Image File Directory (IFD):
+	Directory Entry Count	 2		
+	IFD Entry (Field)		12		
+	Next IFD Offset			 4		(or 0000 if none) 
+
+Field:
+	Tag						 2
+	Type					 2		
+	Value Count				 4		Number of values
+	Value/Offset			 4		Value if value fits into 4 bytes.
+
+
+These are the required fields for RGB images (in numerical order):
+
+TagName						Decimal	Hex		Type			Value
+
+ImageWidth					256		100		SHORT or LONG	
+ImageLength					257 	101		SHORT or LONG	
+BitsPerSample				258 	102		SHORT			8,8,8
+Compression					259 	103		SHORT			1 or 32773
+PhotometricInterpretation	262 	106		SHORT			2
+StripOffsets				273 	111		SHORT or LONG	
+SamplesPerPixel				277 	115		SHORT			3 or more
+RowsPerStrip				278 	116		SHORT or LONG	
+StripByteCounts				279 	117		LONG or SHORT	
+XResolution 				282		11A		RATIONAL		
+YResolution 				283		11B		RATIONAL		
+ResolutionUnit				296 	128		SHORT			1, 2 or 3
+
+
+For tiled images:
+
+TileWidth					322		142		SHORT or LONG	
+TileLength					323		143		SHORT or LONG	
+TileOffsets					324		144		LONG			
+TileByteCounts				325		145		SHORT or LONG	
+
+
+
+
+Data Types
+----------
+
+1	=	BYTE 8-bit unsigned integer.
+2	=	ASCII 8-bit byte that contains a 7-bit ASCII code; the last byte must be NUL (binary zero).
+3	=	SHORT 16-bit (2-byte) unsigned integer.
+4	=	LONG 32-bit (4-byte) unsigned integer.
+5	=	RATIONAL Two LONGs: the first represents the numerator of afraction; the second, the denominator.
+6	=	SBYTE An 8-bit signed (twos-complement) integer.
+7	=	UNDEFINED An 8-bit byte that may contain anything, depending on the definition of the field.
+8	=	SSHORT A 16-bit (2-byte) signed (twos-complement) integer.
+9	=	SLONG A 32-bit (4-byte) signed (twos-complement) integer.
+10	=	SRATIONAL Two SLONG’s: the first represents the numerator of a fraction, the second the denominator.
+11	=	FLOAT Single precision (4-byte) IEEE format.
+12	=	DOUBLE Double precision (8-byte) IEEE format.
+
+
+
+
+Useful TIFF Stuff
+-----------------
+
+*	StripsPerImage:
+
+	StripsPerImage = floor ((ImageLength + RowsPerStrip - 1) / RowsPerStrip).
+
+	StripsPerImage is not a field. It is merely a value that a TIFF reader will 
+	want to	compute because it specifies the number of StripOffsets and 
+	StripByteCounts for the	image.
+
+
+*	RowsPerStrip
+	
+	Choose RowsPerStrip such that each strip is	about 8K bytes, even if the 
+	data is not compressed, since it makes buffering simpler for readers. 
+	The “8K” value is fairly arbitrary, but seems to work well.
+
+*	I think I've worked-out that a 'Word' in TIFF is 16 bits.
+
+
+
+
+Useful Erlang Stuff
+-------------------
+
+*	Use werl from the directory where you source code resides in order that you
+	can use c(module_name) to compile the module from within the shell.
+
+*	Little and Big Endianess:
+
+	list_to_binary(["MM",<<42:16/little>>,8]).
+		<<77,77,42,0,8>>
+	list_to_binary(["MM",<<42:16/big>>,8]).   
+		<<77,77,0,42,8>>
+
+
+
+
+
+GPL and Copyright Stuff
+=======================
+
+Single file:
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+Multiple files:
+
+This file is part of Foobar.
+
+Foobar is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Foobar is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+
+
+
