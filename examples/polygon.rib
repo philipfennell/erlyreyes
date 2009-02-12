@@ -1,0 +1,27 @@
+# Basic rib to render a 1x1 polygon - no ray tracing
+
+Display "untitled" "framebuffer" "rgb"
+Format 427 240 1
+Projection "perspective" "fov" 40
+ShadingRate 1
+
+# LightSource "distantlight" 1 "intensity" 1.5 "from" [0 0 0] "to" [0 0 1]
+
+Translate  0 0 5
+Rotate -30 1 0 0
+Rotate 0   0 1 0
+Scale 1 1 -1
+
+WorldBegin
+	ReverseOrientation
+	LightSource "pointlight" 1 "intensity" 25 "from" [1 4 1]
+
+	TransformBegin
+		Surface "plastic"
+		# Displacement "test" "float Km" 0.1
+		# Attribute "bound" "displacement" [0.1]
+		Scale 4 1 4
+		Polygon "P" [-0.5 -0.5 0  0.5 -0.5 0  0.5 0.5 0  -0.5 0.5 0]
+				"st" [0 0  1 0  1 1  0 1]
+	TransformEnd
+WorldEnd

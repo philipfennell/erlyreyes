@@ -1,0 +1,12 @@
+#ortho square.rib
+
+Display "untitled" "framebuffer" "rgb"
+Format 320 198 1
+Projection "orthographic"
+ShadingRate 1
+
+Translate  0 0 5
+
+WorldBegin
+	Polygon "P" [-0.5 -0.5 0  0.5 -0.5 0  0.5 0.5 0  -0.5 0.5 0]
+WorldEnd
